@@ -1,0 +1,70 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>How to Play - Super Tic-Tac-Toe</title>
+  <link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@400;600&display=swap" rel="stylesheet">
+  <style>
+    body {
+      margin: 0;
+      font-family: 'Fredoka', sans-serif;
+      background: #f5f5f5;
+      background: url("/static/image/background1.png") no-repeat center center fixed;
+      background-size: cover;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      min-height: 100vh;
+    }
+    .instructions-container {
+      background: rgba(255, 255, 255, 0.264);
+      padding: 40px;
+      border-radius: 10px;
+      max-width: 700px;
+      box-shadow: 0 5px 20px rgba(0, 0, 0, 0.1);
+    }
+    h1 {
+      color: #222e3a;
+      text-align: center;
+      margin-bottom: 20px;
+    }
+    ul {
+      line-height: 1.6;
+      font-size: 20px;
+      color: #202932;
+    }
+    .btn {
+      display: block;
+      margin: 30px auto 0;
+      padding: 10px 20px;
+      background: linear-gradient(135deg, #3498db, #2980b9);
+      color: white;
+      border: none;
+      border-radius: 8px;
+      font-weight: bold;
+      cursor: pointer;
+      font-size: 16px;
+      transition: background 0.3s, transform 0.2s;
+    }
+    .btn:hover {
+      background: linear-gradient(135deg, #2980b9, #2471a3);
+      transform: scale(1.05);
+    }
+  </style>
+</head>
+<body>
+  <div class="instructions-container">
+    <h1>How to Play</h1>
+    <ul>
+      <li>The game board consists of 9 sub-boards (3x3), forming a larger 3x3 grid.</li>
+      <li>You are Player <strong>X</strong>, and the AI is Player <strong>O</strong>.</li>
+      <li>When you click on a cell in a sub-board, you send your opponent to that corresponding sub-board.</li>
+      <li>If the sub-board is already won or full, your opponent can move anywhere.</li>
+      <li>Win a sub-board like regular tic-tac-toe (three in a row).</li>
+      <li>Win the meta board by winning 3 sub-boards in a row.</li>
+    </ul>
+    <button class="btn" onclick="window.location.href='/'">Back to Home</button>
+  </div>
+</body>
+</html>

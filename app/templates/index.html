@@ -1,0 +1,55 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Super Tic-Tac-Toe - Home</title>
+  <link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@400;600&display=swap" rel="stylesheet">
+  <style>
+    body {
+    margin: 0;
+    font-family: 'Fredoka', sans-serif;
+    background: url("/static/image/background1.png") no-repeat center center fixed;
+    background-size: cover;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    height: 100vh;
+  }
+    .home-container {
+      text-align: center;
+      background: rgba(255, 255, 255, 0.5);
+      padding: 40px;
+      border-radius: 20px;
+      box-shadow: 0 5px 20px rgba(0, 0, 0, 0.1);
+    }
+    h1 {
+      color: #2c3e50;
+      margin-bottom: 30px;
+    }
+    .btn {
+      background: linear-gradient(135deg, #3498db, #2980b9);
+      color: white;
+      border: none;
+      padding: 12px 24px;
+      font-size: 16px;
+      font-weight: bold;
+      border-radius: 8px;
+      cursor: pointer;
+      margin: 10px;
+      transition: transform 0.2s, background 0.3s;
+    }
+    .btn:hover {
+      transform: scale(1.05);
+      background: linear-gradient(135deg, #2980b9, #2471a3);
+    }
+  </style>
+</head>
+<body>
+  <div class="home-container">
+    <h1>Welcome to Super Tic-Tac-Toe</h1>
+    <button class="btn" onclick="window.location.href='game'">Play New Game</button>
+    <button class="btn" onclick="window.location.href='instructions'">How to Play</button>
+  </div>
+</body>
+</html>

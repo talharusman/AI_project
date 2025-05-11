@@ -1,0 +1,49 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Super Tic-Tac-Toe</title>
+    <link rel="stylesheet" href="/static/css/style.css">
+</head>
+<body>
+    <div class="container">
+        <h1>Super Tic-Tac-Toe</h1>
+        
+        <div class="game-info">
+            <button id= "back-home"class="back-home" onclick="window.location.href='/'">Back to Home</button>
+            <div class="scores">
+                <div class="score">
+                    <span>Player X:</span>
+                    <span id="player-score">0</span>
+                </div>
+                <div class="score">
+                    <span>AI (O):</span>
+                    <span id="ai-score">0</span>
+                </div>
+            </div>
+            <div id="status" class="status">Connecting...</div>
+            
+            <button id="reset-button" class="reset-button">Reset Game</button>
+        </div>
+        
+        <div class="game-container">
+            <div class="meta-board">
+                <h3>Meta Board</h3>
+                <div class="meta-grid">
+                    <!-- Meta board cells will be added here by JavaScript -->
+                </div>
+            </div>
+            
+            <div class="main-board">
+                
+                <div class="grid">
+                    <!-- Board cells will be added here by JavaScript -->
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <script src="/static/js/script.js"></script>
+</body>
+</html>
