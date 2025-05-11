@@ -20,7 +20,7 @@ cd your-repo-name
 
 ### 2. Create a virtual environment
 ```bush
-- python -m venv .venv
+python -m venv .venv
 ```
 ### 3. Activate the virtual environment
 ```bush
@@ -29,10 +29,10 @@ cd your-repo-name
 
 ### 4. Install dependencies
 ```bush
-- pip install -r requirements.txt
+pip install -r requirements.txt
 ```
 
 ### 5. Run the server
 ```bush
-- uvicorn main:app --reload
+uvicorn main:app --reload
 ```
