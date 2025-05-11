@@ -16,3 +16,12 @@ This is a FastAPI web version of Super Tic-Tac-Toe, including real-time game log
 ```bash
 git clone https://github.com/your-username/your-repo-name.git
 cd your-repo-name
+
+### 2. Create a virtual environment
+ python -m venv .venv
+### 3. Activate the virtual environment
+.venv\Scripts\activate
+### 4. Install dependencies
+pip install -r requirements.txt
+### 5. Run the server
+uvicorn main:app --reload
