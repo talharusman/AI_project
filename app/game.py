@@ -236,6 +236,7 @@ class SuperTicTacToe:
         board_copy = [row[:] for row in self.board]  # Create a copy of the board
         _, move = self.minimax(board_copy, 6, -math.inf, math.inf, True, PLAYER_O, self.last_move)
         
+        
         if move:
             # Update score using the selected move itself as the "optimal" move
             self.update_score(self.current_player, move, move)
