@@ -6,6 +6,7 @@ import time
 PLAYER_X = 'X'  # Human
 PLAYER_O = 'O'  # AI
 EMPTY = '.'
+AI_DEPTH = 8  # Reduced depth for faster performance
 
 class SuperTicTacToe:
     def __init__(self):
@@ -16,7 +17,8 @@ class SuperTicTacToe:
         self.ai_score = 0
         self.game_over = False
         self.winner = None
-        self.valid_moves = self.get_valid_moves(self.board, self.last_move)
+        self.meta_winners = [[EMPTY]*3 for _ in range(3)]  # locked first-winners
+        self.valid_moves = self.get_valid_moves(self.board, self.last_move, self.meta_winners)
 
     def create_board(self):
         return [[EMPTY for _ in range(9)] for _ in range(9)]
@@ -45,37 +47,53 @@ class SuperTicTacToe:
         
         return None
 
-    def get_valid_moves(self, board, last_move):
+    def get_valid_moves(self, board, last_move, meta_winners=None):
         if last_move is None:
             return [(i, j) for i in range(9) for j in range(9) if board[i][j] == EMPTY]
-        
+
         sub_index = (last_move[0] % 3) * 3 + (last_move[1] % 3)
         row_start = (sub_index // 3) * 3
         col_start = (sub_index % 3) * 3
-        
-        moves = [(i, j) for i in range(row_start, row_start+3)
-                        for j in range(col_start, col_start+3)
-                        if board[i][j] == EMPTY]
-        
-        if not moves:
+        si, sj = sub_index // 3, sub_index % 3
+
+        sub = [row[col_start:col_start+3] for row in board[row_start:row_start+3]]
+        sub_done = (meta_winners and meta_winners[si][sj] != EMPTY) or \
+                   all(cell != EMPTY for row in sub for cell in row)
+
+        if sub_done:
             return [(i, j) for i in range(9) for j in range(9) if board[i][j] == EMPTY]
-        
-        return moves
+
+        return [(i, j) for i in range(row_start, row_start+3)
+                       for j in range(col_start, col_start+3)
+                       if board[i][j] == EMPTY]
 
     def is_full(self, board):
         return all(cell != EMPTY for row in board for cell in row)
 
-    def get_meta_board(self, board):
+    def get_meta_board(self, board, stored_winners=None):
         meta = [[EMPTY]*3 for _ in range(3)]
         for i in range(3):
             for j in range(3):
-                sub = [row[j*3:j*3+3] for row in board[i*3:i*3+3]]
-                winner = self.subboard_winner(sub)
-                if winner:
-                    meta[i][j] = winner
-                elif all(cell != EMPTY for row in sub for cell in row):
-                    meta[i][j] = 'D'  # Draw
+                if stored_winners and stored_winners[i][j] != EMPTY:
+                    meta[i][j] = stored_winners[i][j]
+                else:
+                    sub = [row[j*3:j*3+3] for row in board[i*3:i*3+3]]
+                    winner = self.subboard_winner(sub)
+                    if winner:
+                        meta[i][j] = winner
+                    elif all(cell != EMPTY for row in sub for cell in row):
+                        meta[i][j] = 'D'
         return meta
+
+    def _update_meta_winners(self):
+        """Lock in the first winner of each sub-board — never overwritten."""
+        for i in range(3):
+            for j in range(3):
+                if self.meta_winners[i][j] == EMPTY:
+                    sub = [row[j*3:j*3+3] for row in self.board[i*3:i*3+3]]
+                    winner = self.subboard_winner(sub)
+                    if winner:
+                        self.meta_winners[i][j] = winner
 
     def check_winner(self, meta):
         # Check rows
@@ -131,15 +149,22 @@ class SuperTicTacToe:
         winner = self.check_winner(meta)
 
         if winner == player:
-            return 1000, None
+            return 1000 + depth, None  # Prefer faster wins
         elif winner == self.opponent(player):
-            return -1000, None
+            return -1000 - depth, None  # Avoid slower losses
         elif depth == 0 or self.is_full(board):
             return self.evaluate(board, player), None
 
         # Use the correct get_valid_moves method with the board parameter
         moves = self.get_valid_moves(board, last_move)
-        random.shuffle(moves)  # Adds randomness
+        
+        # Prioritize center moves and corner moves for better gameplay
+        def move_priority(move):
+            row, col = move
+            center_distance = abs(row - 4) + abs(col - 4)
+            return center_distance
+        
+        moves.sort(key=move_priority)  # Sort by priority instead of random shuffle
 
         if maximizing:
             max_eval = -math.inf
@@ -200,7 +225,7 @@ class SuperTicTacToe:
 
         # Calculate optimal move for scoring
         board_copy = [row[:] for row in self.board]  # Create a copy of the board
-        _, optimal_move = self.minimax(board_copy, 3, -math.inf, math.inf, True, self.current_player, self.last_move)
+        _, optimal_move = self.minimax(board_copy, AI_DEPTH, -math.inf, math.inf, True, self.current_player, self.last_move)
         
         # Update score
         self.update_score(self.current_player, move, optimal_move)
@@ -208,9 +233,10 @@ class SuperTicTacToe:
         # Make the move
         self.board[row][col] = self.current_player
         self.last_move = move
-        
+        self._update_meta_winners()
+
         # Check for game over
-        meta = self.get_meta_board(self.board)
+        meta = self.get_meta_board(self.board, self.meta_winners)
         winner = self.check_winner(meta)
         
         if winner:
@@ -224,8 +250,47 @@ class SuperTicTacToe:
         
         # Switch player
         self.current_player = self.opponent(self.current_player)
-        self.valid_moves = self.get_valid_moves(self.board, self.last_move)
-        
+        self.valid_moves = self.get_valid_moves(self.board, self.last_move, self.meta_winners)
+
+        return self.get_game_state()
+
+    def make_pvp_move(self, row, col):
+        if self.game_over:
+            return {"error": "Game is already over"}
+
+        move = (row, col)
+        if move not in self.valid_moves:
+            return {"error": "Invalid move"}
+
+        # Make the move
+        self.board[row][col] = self.current_player
+        self.last_move = move
+
+        # Update scores (simple: +10 per move)
+        if self.current_player == PLAYER_X:
+            self.player_score += 10
+        else:
+            self.ai_score += 10
+
+        self._update_meta_winners()
+
+        # Check for game over
+        meta = self.get_meta_board(self.board, self.meta_winners)
+        winner = self.check_winner(meta)
+
+        if winner:
+            self.game_over = True
+            self.winner = winner
+            return self.get_game_state()
+
+        if self.is_full(self.board):
+            self.game_over = True
+            return self.get_game_state()
+
+        # Switch player
+        self.current_player = self.opponent(self.current_player)
+        self.valid_moves = self.get_valid_moves(self.board, self.last_move, self.meta_winners)
+
         return self.get_game_state()
 
     def ai_move(self):
@@ -234,7 +299,7 @@ class SuperTicTacToe:
         
         # AI uses minimax to find the best move
         board_copy = [row[:] for row in self.board]  # Create a copy of the board
-        _, move = self.minimax(board_copy, 6, -math.inf, math.inf, True, PLAYER_O, self.last_move)
+        _, move = self.minimax(board_copy, AI_DEPTH, -math.inf, math.inf, True, PLAYER_O, self.last_move)
         
         
         if move:
@@ -244,9 +309,10 @@ class SuperTicTacToe:
             # Make the move
             self.board[move[0]][move[1]] = self.current_player
             self.last_move = move
-            
+            self._update_meta_winners()
+
             # Check for game over
-            meta = self.get_meta_board(self.board)
+            meta = self.get_meta_board(self.board, self.meta_winners)
             winner = self.check_winner(meta)
             
             if winner:
@@ -257,23 +323,24 @@ class SuperTicTacToe:
             
             # Switch player
             self.current_player = self.opponent(self.current_player)
-            self.valid_moves = self.get_valid_moves(self.board, self.last_move)
+            self.valid_moves = self.get_valid_moves(self.board, self.last_move, self.meta_winners)
         
         return self.get_game_state()
 
 
     def get_game_state(self):
-        meta_board = self.get_meta_board(self.board)
+        meta_board = self.get_meta_board(self.board, self.meta_winners)
         active_subboard = None
-        
+
         if self.last_move:
             sub_index = (self.last_move[0] % 3) * 3 + (self.last_move[1] % 3)
             row_start = (sub_index // 3) * 3
             col_start = (sub_index % 3) * 3
-            
-            # Check if the subboard is already won or full
+
+            # Check if the subboard is already won (use stored winners) or full
+            si, sj = sub_index // 3, sub_index % 3
             sub = [row[col_start:col_start+3] for row in self.board[row_start:row_start+3]]
-            if self.subboard_winner(sub) or all(cell != EMPTY for row in sub for cell in row):
+            if self.meta_winners[si][sj] != EMPTY or all(cell != EMPTY for row in sub for cell in row):
                 active_subboard = -1  # Any subboard
             else:
                 active_subboard = sub_index
@@ -297,7 +364,8 @@ class SuperTicTacToe:
         self.last_move = None
         self.game_over = False
         self.winner = None
-        self.valid_moves = self.get_valid_moves(self.board, self.last_move)
+        self.meta_winners = [[EMPTY]*3 for _ in range(3)]
+        self.valid_moves = self.get_valid_moves(self.board, self.last_move, self.meta_winners)
         # Don't reset scores to keep track across games
         
         return self.get_game_state()

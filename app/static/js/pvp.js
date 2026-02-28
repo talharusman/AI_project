@@ -1,12 +1,9 @@
 document.addEventListener("DOMContentLoaded", () => {
-  // Generate a random game ID
   const gameId = Math.random().toString(36).substring(2, 15)
 
-  // Connect to WebSocket
   const protocol = window.location.protocol === "https:" ? "wss:" : "ws:"
-  const ws = new WebSocket(`${protocol}//${window.location.host}/ws/${gameId}`)
+  const ws = new WebSocket(`${protocol}//${window.location.host}/ws/pvp/${gameId}`)
 
-  // DOM elements
   const grid = document.querySelector(".grid")
   const metaGrid = document.querySelector(".meta-grid")
   const statusElement = document.getElementById("status")
@@ -18,23 +15,12 @@ document.addEventListener("DOMContentLoaded", () => {
   const modalTitle = document.getElementById("modal-title")
   const modalSubtitle = document.getElementById("modal-subtitle")
 
-  // Game state
   let gameState = null
-  let loading = false
 
-  // Create loading overlay
-  const loadingOverlay = document.createElement("div")
-  loadingOverlay.className = "loading"
-  loadingOverlay.innerHTML = '<div class="loading-spinner"></div>'
-  document.body.appendChild(loadingOverlay)
-
-  // Initialize the board
   function initializeBoard() {
-    // Clear existing grid
     grid.innerHTML = ""
     metaGrid.innerHTML = ""
 
-    // Create meta grid
     for (let i = 0; i < 3; i++) {
       for (let j = 0; j < 3; j++) {
         const metaCell = document.createElement("div")
@@ -45,7 +31,6 @@ document.addEventListener("DOMContentLoaded", () => {
       }
     }
 
-    // Create main grid
     for (let i = 0; i < 9; i++) {
       for (let j = 0; j < 9; j++) {
         const cell = document.createElement("div")
@@ -53,7 +38,6 @@ document.addEventListener("DOMContentLoaded", () => {
         cell.dataset.row = i
         cell.dataset.col = j
 
-        // Add subgrid border classes
         if (i % 3 === 0) cell.classList.add("subgrid-border-top")
         if (i % 3 === 2) cell.classList.add("subgrid-border-bottom")
         if (j % 3 === 0) cell.classList.add("subgrid-border-left")
@@ -65,20 +49,19 @@ document.addEventListener("DOMContentLoaded", () => {
     }
   }
 
-  // Show game over modal
   function showGameOverModal() {
     if (gameState.winner === "X") {
-      modalIcon.textContent = "🏆"
-      modalTitle.textContent = "You Win!"
+      modalIcon.textContent = "\uD83C\uDFC6"
+      modalTitle.textContent = "Player 1 Wins!"
       modalTitle.className = "modal-title winner-x-title"
-      modalSubtitle.textContent = "Nicely played! You outsmarted the AI."
+      modalSubtitle.textContent = "Player 1 (X) claims victory!"
     } else if (gameState.winner === "O") {
-      modalIcon.textContent = "🤖"
-      modalTitle.textContent = "AI Wins!"
+      modalIcon.textContent = "\uD83C\uDF89"
+      modalTitle.textContent = "Player 2 Wins!"
       modalTitle.className = "modal-title winner-o-title"
-      modalSubtitle.textContent = "The AI got you this time. Try again?"
+      modalSubtitle.textContent = "Player 2 (O) claims victory!"
     } else {
-      modalIcon.textContent = "🤝"
+      modalIcon.textContent = "\uD83E\uDD1D"
       modalTitle.textContent = "It's a Draw!"
       modalTitle.className = "modal-title"
       modalSubtitle.textContent = "So close! Neither side could claim victory."
@@ -86,32 +69,26 @@ document.addEventListener("DOMContentLoaded", () => {
     modal.style.display = "flex"
   }
 
-  // Update the board based on game state
   function updateBoard() {
     if (!gameState) return
 
-    // Update main board
     const cells = document.querySelectorAll(".cell")
     cells.forEach((cell) => {
       const row = Number.parseInt(cell.dataset.row)
       const col = Number.parseInt(cell.dataset.col)
 
-      // Clear ALL previous classes first
       cell.classList.remove("X", "O", "valid", "ai-valid", "subgrid-active", "last-move")
-      
-      // Set cell content
+
       const value = gameState.board[row][col]
       if (value !== ".") {
         cell.classList.add(value)
         cell.textContent = value
-        cell.style.cursor = "default" // Remove pointer cursor for filled cells
-        // Ensure no subgrid-active class for filled cells
+        cell.style.cursor = "default"
         cell.classList.remove("subgrid-active")
       } else {
         cell.textContent = ""
-        cell.style.cursor = "pointer" // Restore pointer cursor for empty cells
-        
-        // Only add subgrid-active when locked to a specific sub-board (not when free to play anywhere)
+        cell.style.cursor = "pointer"
+
         if (gameState.active_subboard !== null && gameState.active_subboard !== -1) {
           const subRow = Math.floor(row / 3)
           const subCol = Math.floor(col / 3)
@@ -123,18 +100,16 @@ document.addEventListener("DOMContentLoaded", () => {
         }
       }
 
-      // Highlight valid moves (only for empty cells)
       const isValidMove = gameState.valid_moves.some((move) => move[0] === row && move[1] === col)
       if (isValidMove && !gameState.game_over && value === ".") {
         if (gameState.current_player === "X") {
           cell.classList.add("valid")
-        } else if (gameState.current_player === "O") {
+        } else {
           cell.classList.add("ai-valid")
         }
       }
     })
 
-    // Highlight last move
     if (gameState.last_move) {
       const lastRow = gameState.last_move[0]
       const lastCol = gameState.last_move[1]
@@ -151,16 +126,13 @@ document.addEventListener("DOMContentLoaded", () => {
       })
     }
 
-    // Update meta board
     const metaCells = document.querySelectorAll(".meta-cell")
     metaCells.forEach((cell) => {
       const row = Number.parseInt(cell.dataset.row)
       const col = Number.parseInt(cell.dataset.col)
 
-      // Clear previous classes
       cell.classList.remove("X", "O", "D")
 
-      // Set meta cell content
       const value = gameState.meta_board[row][col]
       if (value !== ".") {
         cell.classList.add(value)
@@ -170,74 +142,38 @@ document.addEventListener("DOMContentLoaded", () => {
       }
     })
 
-    // Update scores
     playerScoreElement.textContent = gameState.player_score
     aiScoreElement.textContent = gameState.ai_score
 
-    // Update status
     if (gameState.game_over) {
       if (gameState.winner) {
-        statusElement.textContent = `Game Over! ${gameState.winner === "X" ? "Player" : "AI"} wins!`
+        const winnerName = gameState.winner === "X" ? "Player 1" : "Player 2"
+        statusElement.textContent = `Game Over! ${winnerName} wins!`
         statusElement.className = `status winner-${gameState.winner}`
       } else {
         statusElement.textContent = "Game Over! It's a draw!"
         statusElement.className = "status"
       }
-      hideLoading()
       showGameOverModal()
     } else {
-      // Check if AI is thinking
-      if (gameState.ai_thinking) {
-        statusElement.textContent = "AI is thinking..."
-        statusElement.className = "status ai-thinking"
-        showLoading()
-      } else if (gameState.current_player === "O") {
-        statusElement.textContent = "Current Player: AI (O)"
-        statusElement.className = "status"
-        showLoading()
-      } else {
-        const validCount = gameState.valid_moves.length
-        const subboardInfo =
-          gameState.active_subboard === -1
-            ? "any sub-board"
-            : `sub-board ${gameState.active_subboard + 1}`
-        statusElement.textContent = `Your turn (X) — ${validCount} cell${validCount !== 1 ? "s" : ""} available in ${subboardInfo}`
-        statusElement.className = "status player-turn"
-        hideLoading()
-      }
+      const playerName = gameState.current_player === "X" ? "Player 1 (X)" : "Player 2 (O)"
+      const validCount = gameState.valid_moves.length
+      const subboardInfo =
+        gameState.active_subboard === -1
+          ? "any sub-board"
+          : `sub-board ${gameState.active_subboard + 1}`
+      statusElement.textContent = `${playerName}'s turn \u2014 ${validCount} cell${validCount !== 1 ? "s" : ""} available in ${subboardInfo}`
+      statusElement.className = gameState.current_player === "X" ? "status player-turn" : "status ai-thinking"
     }
   }
 
-  // Handle cell click
   function handleCellClick(row, col) {
-    console.log(`Cell clicked: row=${row}, col=${col}`)
+    if (!gameState) return
+    if (gameState.game_over) return
 
-    if (!gameState) {
-      console.log("Game state is null, cannot make a move")
-      return
-    }
-
-    if (gameState.game_over) {
-      console.log("Game is over, cannot make a move")
-      return
-    }
-
-    if (gameState.current_player !== "X") {
-      console.log("Not player's turn, cannot make a move")
-      return
-    }
-
-    // Check if the move is valid
     const isValidMove = gameState.valid_moves.some((move) => move[0] === row && move[1] === col)
+    if (!isValidMove) return
 
-    if (!isValidMove) {
-      console.log("Invalid move")
-      return
-    }
-
-    console.log("Sending move to server")
-
-    // Send move to server
     ws.send(
       JSON.stringify({
         action: "move",
@@ -245,12 +181,8 @@ document.addEventListener("DOMContentLoaded", () => {
         col: col,
       }),
     )
-
-    // Show loading while waiting for AI
-    showLoading()
   }
 
-  // Reset the game
   function resetGame() {
     modal.style.display = "none"
     ws.send(
@@ -260,51 +192,25 @@ document.addEventListener("DOMContentLoaded", () => {
     )
   }
 
-  // Show loading overlay
-  function showLoading() {
-    loading = true
-    loadingOverlay.style.display = "flex"
-  }
-
-  // Hide loading overlay
-  function hideLoading() {
-    loading = false
-    loadingOverlay.style.display = "none"
-  }
-
-  // WebSocket event handlers
   ws.onopen = () => {
-    console.log("WebSocket connection opened")
     statusElement.textContent = "Connected! Waiting for game to start..."
     initializeBoard()
   }
 
   ws.onmessage = (event) => {
-    console.log("Received message:", event.data)
     gameState = JSON.parse(event.data)
     updateBoard()
-
-    // Make sure loading is hidden after receiving a message
-    hideLoading()
   }
 
   ws.onclose = () => {
-    console.log("WebSocket connection closed")
     statusElement.textContent = "Connection closed. Please refresh the page."
     statusElement.className = "status game-over"
-    hideLoading() // Make sure loading is hidden if connection closes
   }
 
-  ws.onerror = (error) => {
-    console.error("WebSocket error:", error)
+  ws.onerror = () => {
     statusElement.textContent = "Connection error. Please refresh the page."
     statusElement.className = "status game-over"
-    hideLoading() // Make sure loading is hidden if there's an error
   }
 
-  // Event listeners
   resetButton.addEventListener("click", resetGame)
-
-  // Initial loading state
-  showLoading()
 })

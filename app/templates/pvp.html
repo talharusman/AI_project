@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Super Tic-Tac-Toe</title>
+    <title>Super Tic-Tac-Toe - Player vs Player</title>
     <link rel="stylesheet" href="/static/css/style.css">
 </head>
 <body>
@@ -15,20 +15,20 @@
 
             <div class="scores">
                 <div class="score">
-                    <span>✕</span>
-                    <span>Player:</span>
+                    <span>&#10005;</span>
+                    <span>Player 1:</span>
                     <span id="player-score">0</span>
                 </div>
                 <div class="score">
-                    <span>◯</span>
-                    <span>AI:</span>
+                    <span>&#9711;</span>
+                    <span>Player 2:</span>
                     <span id="ai-score">0</span>
                 </div>
             </div>
 
             <div id="status" class="status">Connecting...</div>
 
-            <button id="reset-button" class="reset-button">↺ Reset</button>
+            <button id="reset-button" class="reset-button">&#8634; Reset</button>
         </div>
 
         <div class="game-container">
@@ -60,6 +60,6 @@
         </div>
     </div>
 
-    <script src="/static/js/script.js"></script>
+    <script src="/static/js/pvp.js"></script>
 </body>
 </html>

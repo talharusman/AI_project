@@ -4,67 +4,218 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>How to Play - Super Tic-Tac-Toe</title>
-  <link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@400;600&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@400;600;700&display=swap" rel="stylesheet">
   <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
     body {
-      margin: 0;
       font-family: 'Fredoka', sans-serif;
-      background: #f5f5f5;
       background: url("/static/image/background1.png") no-repeat center center fixed;
       background-size: cover;
       display: flex;
       justify-content: center;
       align-items: center;
       min-height: 100vh;
+      padding: 24px 16px;
     }
+
     .instructions-container {
-      background: rgba(255, 255, 255, 0.264);
-      padding: 40px;
-      border-radius: 10px;
-      max-width: 700px;
-      box-shadow: 0 5px 20px rgba(0, 0, 0, 0.1);
+      background: rgba(255, 255, 255, 0.55);
+      backdrop-filter: blur(22px);
+      -webkit-backdrop-filter: blur(22px);
+      padding: 48px 44px 40px;
+      border-radius: 28px;
+      max-width: 560px;
+      width: 100%;
+      box-shadow: 0 20px 60px rgba(0, 0, 0, 0.15), inset 0 1px 0 rgba(255,255,255,0.95);
+      border: 1.5px solid rgba(118, 75, 162, 0.2);
     }
-    h1 {
-      color: #222e3a;
+
+    .page-title {
       text-align: center;
-      margin-bottom: 20px;
+      font-size: 2.4rem;
+      font-weight: 700;
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 50%, #f093fb 100%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+      letter-spacing: 1px;
+      filter: drop-shadow(0 2px 10px rgba(118, 75, 162, 0.35));
+      margin-bottom: 8px;
     }
-    ul {
-      line-height: 1.6;
-      font-size: 30px;
-      color: #202932;
+
+    .subtitle {
+      text-align: center;
+      font-size: 0.95rem;
+      color: #8e8ea8;
+      font-weight: 400;
+      margin-bottom: 28px;
+      letter-spacing: 0.3px;
     }
+
+    .divider {
+      width: 50px;
+      height: 3px;
+      background: linear-gradient(90deg, #667eea, #f093fb);
+      border-radius: 99px;
+      margin: 0 auto 28px;
+    }
+
+    .rules-list {
+      list-style: none;
+      display: flex;
+      flex-direction: column;
+      gap: 14px;
+      margin-bottom: 32px;
+    }
+
+    .rule-item {
+      display: flex;
+      align-items: flex-start;
+      gap: 14px;
+      padding: 14px 16px;
+      background: rgba(255, 255, 255, 0.5);
+      border-radius: 14px;
+      border: 1px solid rgba(118, 75, 162, 0.12);
+      transition: transform 0.2s ease, box-shadow 0.2s ease;
+    }
+
+    .rule-item:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 6px 20px rgba(118, 75, 162, 0.12);
+    }
+
+    .rule-number {
+      flex-shrink: 0;
+      width: 32px;
+      height: 32px;
+      background: linear-gradient(135deg, #667eea, #764ba2);
+      color: white;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-weight: 700;
+      font-size: 14px;
+      box-shadow: 0 3px 10px rgba(102, 126, 234, 0.35);
+    }
+
+    .rule-text {
+      font-size: 0.95rem;
+      color: #3a3a5a;
+      line-height: 1.5;
+      font-weight: 400;
+    }
+
+    .rule-text strong {
+      font-weight: 700;
+      color: #764ba2;
+    }
+
+    .rule-text .player-x {
+      color: #c0392b;
+      font-weight: 700;
+    }
+
+    .rule-text .player-o {
+      color: #1a6fa8;
+      font-weight: 700;
+    }
+
+    .btn-group {
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+
     .btn {
       display: block;
-      margin: 30px auto 0;
-      padding: 10px 20px;
-      background: linear-gradient(135deg, #3498db, #2980b9);
-      color: white;
-      border: none;
-      border-radius: 8px;
-      font-weight: bold;
-      cursor: pointer;
+      width: 100%;
+      padding: 13px 28px;
       font-size: 16px;
-      transition: background 0.3s, transform 0.2s;
+      font-weight: 700;
+      font-family: 'Fredoka', sans-serif;
+      border: none;
+      border-radius: 50px;
+      cursor: pointer;
+      letter-spacing: 0.3px;
+      transition: transform 0.2s ease, box-shadow 0.2s ease;
+      text-align: center;
     }
-    .btn:hover {
-      background: linear-gradient(135deg, #2980b9, #2471a3);
-      transform: scale(1.05);
+
+    .btn-primary {
+      background: linear-gradient(135deg, #667eea, #764ba2);
+      color: white;
+      box-shadow: 0 6px 20px rgba(102, 126, 234, 0.5);
+    }
+
+    .btn-primary:hover {
+      transform: translateY(-2px) scale(1.03);
+      box-shadow: 0 10px 30px rgba(102, 126, 234, 0.65);
+    }
+
+    .btn-secondary {
+      background: rgba(102, 126, 234, 0.08);
+      color: #764ba2;
+      border: 1.5px solid rgba(118, 75, 162, 0.25);
+    }
+
+    .btn-secondary:hover {
+      transform: translateY(-2px) scale(1.03);
+      background: rgba(102, 126, 234, 0.14);
+      box-shadow: 0 6px 18px rgba(118, 75, 162, 0.22);
+    }
+
+    .btn:active {
+      transform: scale(0.97) translateY(0);
+    }
+
+    @media (max-width: 480px) {
+      .instructions-container { padding: 32px 24px 28px; }
+      .page-title { font-size: 1.9rem; }
+      .rule-item { padding: 12px 14px; gap: 10px; }
+      .rule-number { width: 28px; height: 28px; font-size: 12px; }
+      .rule-text { font-size: 0.88rem; }
     }
   </style>
 </head>
 <body>
   <div class="instructions-container">
-    <h1>How to Play</h1>
-    <ul>
-      <li>The game board consists of 9 sub-boards (3x3), forming a larger 3x3 grid.</li>
-      <li>You are Player <strong>X</strong>, and the AI is Player <strong>O</strong>.</li>
-      <li>When you click on a cell in a sub-board, you send your opponent to that corresponding sub-board.</li>
-      <li>If the sub-board is already won or full, your opponent can move anywhere.</li>
-      <li>Win a sub-board like regular tic-tac-toe (three in a row).</li>
-      <li>Win the meta board by winning 3 sub-boards in a row.</li>
+    <h1 class="page-title">How to Play</h1>
+    <p class="subtitle">Master the rules of Super Tic-Tac-Toe</p>
+    <div class="divider"></div>
+
+    <ul class="rules-list">
+      <li class="rule-item">
+        <div class="rule-number">1</div>
+        <div class="rule-text">The board has <strong>9 sub-boards</strong> (3x3), forming one large 3x3 grid.</div>
+      </li>
+      <li class="rule-item">
+        <div class="rule-number">2</div>
+        <div class="rule-text">Play <strong>vs AI</strong> or <strong>Player vs Player</strong> on the same device. <span class="player-x">X</span> always goes first.</div>
+      </li>
+      <li class="rule-item">
+        <div class="rule-number">3</div>
+        <div class="rule-text">When you click a cell, your opponent is <strong>sent to the corresponding sub-board</strong>.</div>
+      </li>
+      <li class="rule-item">
+        <div class="rule-number">4</div>
+        <div class="rule-text">If that sub-board is already won or full, your opponent can <strong>move anywhere</strong>.</div>
+      </li>
+      <li class="rule-item">
+        <div class="rule-number">5</div>
+        <div class="rule-text">Win a sub-board like regular tic-tac-toe &mdash; <strong>three in a row</strong>.</div>
+      </li>
+      <li class="rule-item">
+        <div class="rule-number">6</div>
+        <div class="rule-text">Win the <strong>meta board</strong> by winning 3 sub-boards in a row!</div>
+      </li>
     </ul>
-    <button class="btn" onclick="window.location.href='/'">Back to Home</button>
+
+    <div class="btn-group">
+      <button class="btn btn-primary" onclick="window.location.href='game'">Play Now</button>
+      <button class="btn btn-secondary" onclick="window.location.href='/'">Back to Home</button>
+    </div>
   </div>
 </body>
 </html>

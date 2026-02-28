@@ -4,6 +4,7 @@ from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
 import json
 import asyncio
+import concurrent.futures
 from .game import SuperTicTacToe
 
 app = FastAPI()
@@ -25,6 +26,10 @@ async def get_home(request: Request):
 async def game(request: Request):
     return templates.TemplateResponse("game.html", {"request": request})
 
+@app.get("/pvp", response_class=HTMLResponse)
+async def pvp(request: Request):
+    return templates.TemplateResponse("pvp.html", {"request": request})
+
 @app.get("/instructions", response_class=HTMLResponse)
 async def instructions(request: Request):
     return templates.TemplateResponse("instructions.html", {"request": request})
@@ -45,8 +50,18 @@ async def websocket_endpoint(websocket: WebSocket, game_id: str):
     
     # If AI starts first, make a move
     if game.current_player == 'O':
-        await asyncio.sleep(1.5)  # 1.5 second pause before AI's turn
-        game_state = game.ai_move()
+        # Send AI thinking status
+        thinking_state = game.get_game_state()
+        thinking_state['ai_thinking'] = True
+        await websocket.send_json(thinking_state)
+        
+        await asyncio.sleep(0.8)  # Shorter pause 
+        
+        # Run AI calculation in thread pool to avoid blocking
+        loop = asyncio.get_event_loop()
+        with concurrent.futures.ThreadPoolExecutor() as executor:
+            game_state = await loop.run_in_executor(executor, game.ai_move)
+        
         await websocket.send_json(game_state)
     
     try:
@@ -63,8 +78,18 @@ async def websocket_endpoint(websocket: WebSocket, game_id: str):
                 
                 # If it's AI's turn and game is not over, make AI move after a delay
                 if not game.game_over and game.current_player == 'O':
-                    await asyncio.sleep(1.5)  # 1.5 second pause before AI's turn
-                    game_state = game.ai_move()
+                    # Send AI thinking status
+                    thinking_state = game.get_game_state()
+                    thinking_state['ai_thinking'] = True
+                    await websocket.send_json(thinking_state)
+                    
+                    await asyncio.sleep(0.8)  # Shorter pause 
+                    
+                    # Run AI calculation in thread pool to avoid blocking
+                    loop = asyncio.get_event_loop()
+                    with concurrent.futures.ThreadPoolExecutor() as executor:
+                        game_state = await loop.run_in_executor(executor, game.ai_move)
+                    
                     await websocket.send_json(game_state)
             
             elif message["action"] == "reset":
@@ -73,12 +98,57 @@ async def websocket_endpoint(websocket: WebSocket, game_id: str):
                 
                 # If AI starts first after reset, make a move
                 if game.current_player == 'O':
-                    await asyncio.sleep(1.5)  # 1.5 second pause before AI's turn
-                    game_state = game.ai_move()
+                    # Send AI thinking status
+                    thinking_state = game.get_game_state()
+                    thinking_state['ai_thinking'] = True
+                    await websocket.send_json(thinking_state)
+                    
+                    await asyncio.sleep(0.8)  # Shorter pause
+                    
+                    # Run AI calculation in thread pool to avoid blocking
+                    loop = asyncio.get_event_loop()
+                    with concurrent.futures.ThreadPoolExecutor() as executor:
+                        game_state = await loop.run_in_executor(executor, game.ai_move)
+                    
                     await websocket.send_json(game_state)
     
     except WebSocketDisconnect:
         # Clean up the game when the client disconnects
+        if game_id in games:
+            del games[game_id]
+
+@app.websocket("/ws/pvp/{game_id}")
+async def websocket_pvp_endpoint(websocket: WebSocket, game_id: str):
+    await websocket.accept()
+
+    # Create a new game if it doesn't exist
+    if game_id not in games:
+        games[game_id] = SuperTicTacToe()
+
+    game = games[game_id]
+
+    # Send initial game state
+    state = game.get_game_state()
+    state['mode'] = 'pvp'
+    await websocket.send_json(state)
+
+    try:
+        while True:
+            data = await websocket.receive_text()
+            message = json.loads(data)
+
+            if message["action"] == "move":
+                row, col = message["row"], message["col"]
+                game_state = game.make_pvp_move(row, col)
+                game_state['mode'] = 'pvp'
+                await websocket.send_json(game_state)
+
+            elif message["action"] == "reset":
+                game_state = game.reset_game()
+                game_state['mode'] = 'pvp'
+                await websocket.send_json(game_state)
+
+    except WebSocketDisconnect:
         if game_id in games:
             del games[game_id]
 
