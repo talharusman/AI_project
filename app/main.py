@@ -55,55 +55,53 @@ async def websocket_endpoint(websocket: WebSocket, game_id: str):
         thinking_state['ai_thinking'] = True
         await websocket.send_json(thinking_state)
         
-        await asyncio.sleep(0.8)  # Shorter pause 
-        
+        await asyncio.sleep(0.1)  # Brief pause to let client render thinking status
+
         # Run AI calculation in thread pool to avoid blocking
         loop = asyncio.get_event_loop()
         with concurrent.futures.ThreadPoolExecutor() as executor:
             game_state = await loop.run_in_executor(executor, game.ai_move)
-        
+
         await websocket.send_json(game_state)
-    
+
     try:
         while True:
             data = await websocket.receive_text()
             message = json.loads(data)
-            
+
             if message["action"] == "move":
                 row, col = message["row"], message["col"]
                 game_state = game.make_move(row, col)
-                
+
                 # Send updated state after player move
                 await websocket.send_json(game_state)
-                
-                # If it's AI's turn and game is not over, make AI move after a delay
+
+                # If it's AI's turn and game is not over, make AI move
                 if not game.game_over and game.current_player == 'O':
                     # Send AI thinking status
                     thinking_state = game.get_game_state()
                     thinking_state['ai_thinking'] = True
                     await websocket.send_json(thinking_state)
-                    
-                    await asyncio.sleep(0.8)  # Shorter pause 
-                    
+
                     # Run AI calculation in thread pool to avoid blocking
                     loop = asyncio.get_event_loop()
                     with concurrent.futures.ThreadPoolExecutor() as executor:
                         game_state = await loop.run_in_executor(executor, game.ai_move)
-                    
+
                     await websocket.send_json(game_state)
-            
+
             elif message["action"] == "reset":
                 game_state = game.reset_game()
                 await websocket.send_json(game_state)
-                
+
                 # If AI starts first after reset, make a move
                 if game.current_player == 'O':
                     # Send AI thinking status
                     thinking_state = game.get_game_state()
                     thinking_state['ai_thinking'] = True
                     await websocket.send_json(thinking_state)
-                    
-                    await asyncio.sleep(0.8)  # Shorter pause
+
+                    await asyncio.sleep(0.1)  # Brief pause to let client render thinking status
                     
                     # Run AI calculation in thread pool to avoid blocking
                     loop = asyncio.get_event_loop()

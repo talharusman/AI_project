@@ -154,7 +154,7 @@ document.addEventListener("DOMContentLoaded", () => {
         statusElement.textContent = "Game Over! It's a draw!"
         statusElement.className = "status"
       }
-      showGameOverModal()
+      setTimeout(showGameOverModal, 3000)
     } else {
       const playerName = gameState.current_player === "X" ? "Player 1 (X)" : "Player 2 (O)"
       const validCount = gameState.valid_moves.length

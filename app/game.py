@@ -6,7 +6,7 @@ import time
 PLAYER_X = 'X'  # Human
 PLAYER_O = 'O'  # AI
 EMPTY = '.'
-AI_DEPTH = 8  # Reduced depth for faster performance
+AI_DEPTH = 7  # Reduced depth for faster performance
 
 class SuperTicTacToe:
     def __init__(self):
@@ -57,10 +57,9 @@ class SuperTicTacToe:
         si, sj = sub_index // 3, sub_index % 3
 
         sub = [row[col_start:col_start+3] for row in board[row_start:row_start+3]]
-        sub_done = (meta_winners and meta_winners[si][sj] != EMPTY) or \
-                   all(cell != EMPTY for row in sub for cell in row)
+        sub_full = all(cell != EMPTY for row in sub for cell in row)
 
-        if sub_done:
+        if sub_full:
             return [(i, j) for i in range(9) for j in range(9) if board[i][j] == EMPTY]
 
         return [(i, j) for i in range(row_start, row_start+3)
@@ -223,13 +222,9 @@ class SuperTicTacToe:
         if move not in self.valid_moves:
             return {"error": "Invalid move"}
 
-        # Calculate optimal move for scoring
-        board_copy = [row[:] for row in self.board]  # Create a copy of the board
-        _, optimal_move = self.minimax(board_copy, AI_DEPTH, -math.inf, math.inf, True, self.current_player, self.last_move)
-        
-        # Update score
-        self.update_score(self.current_player, move, optimal_move)
-        
+        # Update score (flat points to avoid blocking minimax call)
+        self.player_score += 10
+
         # Make the move
         self.board[row][col] = self.current_player
         self.last_move = move
@@ -337,10 +332,9 @@ class SuperTicTacToe:
             row_start = (sub_index // 3) * 3
             col_start = (sub_index % 3) * 3
 
-            # Check if the subboard is already won (use stored winners) or full
-            si, sj = sub_index // 3, sub_index % 3
+            # Only allow "any subboard" when the target sub-board is completely full
             sub = [row[col_start:col_start+3] for row in self.board[row_start:row_start+3]]
-            if self.meta_winners[si][sj] != EMPTY or all(cell != EMPTY for row in sub for cell in row):
+            if all(cell != EMPTY for row in sub for cell in row):
                 active_subboard = -1  # Any subboard
             else:
                 active_subboard = sub_index
